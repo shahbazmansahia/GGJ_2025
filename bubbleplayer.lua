@@ -1,3 +1,7 @@
+-- Flagged tile indices (replace with actual tile indices you're using for solid surfaces)
+local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
+
+
 function _init()
     x=50 -- x-position
     y=90 -- y-position
@@ -33,6 +37,11 @@ function _update()
         vx = 0
     end
 
+     -- Check for collisions in the new position before updating
+     if not check_collision(x + vx, y) then
+        x = x + vx  -- Update position if no collision
+    end
+
     if btnp(2) and on_ground then -- Jump
         vy = jump_power
         on_ground = false
@@ -43,12 +52,12 @@ function _update()
     else
         vy += 0.2
     end
-    
-    x += vx
-    y += vy
 
-    if y >= 120 - 8 then -- basic collision
-        y = 120 - 8
+    -- Check for vertical collisions (falling)
+    if not check_collision(x, y + vy) then
+        y = y + vy  -- Update position if no collision
+    else
+        -- If collision, stop downward movement and set player on ground
         vy = 0
         on_ground = true
     end
@@ -73,4 +82,31 @@ function  get_gravity()
         return fall_gravity
         
     end
+end
+
+-- Function to check if a tile is flagged (solid)
+function is_solid_tile(x, y)
+    local tile = mget(x, y)
+    for i=1, #solid_tiles do
+        if tile == solid_tiles[i] then
+            return true  -- This is a solid tile
+        end
+    end
+    return false  -- This is not a solid tile
+end
+
+
+function check_collision(new_x, new_y)
+    -- Check collisions for all four corners of the character
+    local x1 = flr(new_x / 8)  -- Calculate tile grid x for left side
+    local y1 = flr(new_y / 8)  -- Calculate tile grid y for bottom side
+    local x2 = flr((new_x + 8 - 1) / 8)  -- Right side
+    local y2 = flr((new_y + 8 - 1) / 8)  -- Top side
+    
+    -- Check if any of the four corners are colliding with solid tiles
+    if is_solid_tile(x1, y1) or is_solid_tile(x1, y2) or is_solid_tile(x2, y1) or is_solid_tile(x2, y2) then
+        return true  -- There's a collision
+    end
+    
+    return false  -- No collision
 end
