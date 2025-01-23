@@ -5,6 +5,9 @@ curr_level = 0
 player_pos_x = 7 * 8
 player_pos_y = 7 * 8
 player_health = 1
+player_direction = 2
+player_speed = 2
+player_sprite = 2
 
 function _init()
     msg="hello pico-8"
@@ -23,11 +26,20 @@ function _init()
     if curr_level == 0 then
         if (btnp(5)) then
             curr_level = 1
-            print('Game Started!')
+            printh('Game Started!')
         end
     elseif curr_level == 1 then
         if (btnp(5)) then
             player_health = 0
+        end
+        if (btn(1)) then
+            player_direction = 3
+            player_pos_x = player_pos_x + player_speed
+        elseif (btn(0)) then
+            player_direction = -3
+            player_pos_x = player_pos_x - player_speed
+        else
+            player_direction = 2
         end
     end
    end
@@ -39,16 +51,22 @@ function _init()
     end
     if curr_level == 1 then
         map()
-        draw_player()
+        draw_player(player_direction)
     end
    end
    
-   function draw_player()
-    if (player_health==1) then
-        spr(2, player_pos_x, player_pos_y-1)
-        spr(1, player_pos_x, player_pos_y)          
+function draw_player(player_direction)
+    
+    player_direction = (player_direction == nil) and 2 or player_direction
+    local is_flip = (player_direction == -3)
+    player_direction = abs(player_direction)
+
+    if (player_health == 1) then
+        spr(player_direction, player_pos_x, player_pos_y - 1, 1, 1, is_flip)
+        spr(1, player_pos_x, player_pos_y)
     else
-        spr(2, player_pos_x, player_pos_y)
+        spr(player_direction, player_pos_x, player_pos_y, 1, 1, is_flip)
     end
+    
     
    end
