@@ -10,7 +10,17 @@ function _init()
     speed = 1
     sprite=1 -- current sprite
     jump_btn_held = false
-    jump_power = -5
+    jump_power = -4
+    jump_power_max = jump_power
+    jump_boost = 1
+    jump_boost_max = jump_boost
+    person_jump_power = -3
+    jump_hold_time = 10
+    jump_hold_time_max = jump_hold_time
+    jump_active = false
+    dir = 2
+    health = 2
+    state=0
 
     on_ground = false
 
@@ -29,30 +39,22 @@ end
 function _update()
     x=(x+128)%128 -- no bounds left and right
 
-    if btn(0) then
-        vx = -speed  -- Left
-    elseif btn(1) then
-        vx = speed   -- Right
-    else
-        vx = 0
+    if state == 0 then
+        default_bubble_movement()
+        if health == 1 then
+            state = 1
+        end
+    elseif state == 1 then
+        default_person_movement()
+    elseif state == 2 then
+        person_falling_movement()
     end
 
-     -- Check for collisions in the new position before updating
-     if not check_collision(x + vx, y) then
+    -- Check for collisions in the new position before updating
+    if not check_collision(x + vx, y) then
         x = x + vx  -- Update position if no collision
     end
-
-    if btnp(2) and on_ground then -- Jump
-        vy = jump_power
-        on_ground = false
-    end
-
-    if vy > 0 then
-        vy = min(vy + 0.2, 1) -- give the graceful bubble drop affect
-    else
-        vy += 0.2
-    end
-
+    
     -- Check for vertical collisions (falling)
     if not check_collision(x, y + vy) then
         y = y + vy  -- Update position if no collision
@@ -64,6 +66,105 @@ function _update()
 
     -- DEBUG
     --printh("x : " .. x .. " y: " .. y .. " vx : " .. vx .. " vy: " .. vy )
+    --printh("s: " .. state)
+end
+
+function default_bubble_movement()
+    if on_ground then -- add coyote time when stopping then jumping.
+        if btn(0) then
+            vx = -1  -- Left
+            dir = -3
+        elseif btn(1) then
+            vx = speed   -- Right
+            dir = 3
+        else
+            vx = 0
+            dir = 2
+        end
+    end
+
+    if on_ground and btn(2) then -- Jump
+        on_ground = false
+        vy = jump_power
+    elseif on_ground and not btn(2) then
+        jump_hold_time = jump_hold_time_max
+        jump_power = jump_power_max
+        jump_boost = jump_boost_max
+    end
+
+    
+
+
+
+    if vy > 0 then
+        vy = min(vy + 0.1, 1) -- give the graceful bubble drop affect 
+    else
+        if btn(2) and not on_ground and jump_hold_time > 0 then
+            jump_hold_time -= 1
+            jump_hold_time = max(jump_hold_time, 0) -- Limit the jump power to a max value
+            
+                vy += 0.1
+                --vy += jump_boost
+                printh(jump_hold_time)
+        else
+            vy += 0.5
+        end
+
+        
+
+    end
+end
+
+function default_person_movement()
+    if btn(0) then
+        vx = -speed  -- Left
+        dir = -3
+    elseif btn(1) then
+        vx = speed   -- Right
+        dir = 3
+    else
+        vx = 0
+        --dir = 2
+    end
+
+    if btnp(2) and on_ground then -- Jump
+        vy = person_jump_power
+        on_ground = false
+    end
+
+    if vy > 0 and not on_ground then
+        state = 2
+        if (dir < 0) dir = -5
+        if (dir > 0) dir = 5
+
+    else
+        vy += 0.2
+    end
+end
+
+function person_falling_movement()
+    if on_ground then
+        state = 1
+        if (dir < 0) dir = -3
+        if (dir > 0) dir = 3
+    else
+        --[[ -- disable movement when diving
+            if btn(0) then
+                dir = -5
+            elseif btn(1) then
+                dir = 5
+            end
+        ]]
+    
+        vy = min(vy + 0.3, 1)
+        vx = (abs(vx) + .1) * dir
+
+        if (vx > 1) vx = 2
+        if (vx < -1) vx = -2
+
+        --printh("vx: " .. vx)
+    end
+
 end
 
 function _draw()
@@ -71,7 +172,7 @@ function _draw()
     -- draw the world
     map(0,0,0,0,16,16)
     -- draw the player, we use dir to mirror sprites
-    spr(sprite, x,y,1,1,dir==-1)
+    draw_player(dir)
 end
 
 -- still testing this
@@ -109,4 +210,20 @@ function check_collision(new_x, new_y)
     end
     
     return false  -- No collision
+end
+
+function draw_player(dir)
+    
+    dir = (dir == nil) and 2 or dir
+    local is_flip = (dir < 0)
+    dir = abs(dir)
+
+    if (health == 2) then
+        spr(dir, x, y - 1, 1, 1, is_flip)
+        spr(1, x, y)
+    else
+        spr(dir, x, y, 1, 1, is_flip)
+    end
+    
+    
 end
