@@ -3,8 +3,9 @@ local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
 
 
 function _init()
-    x=50 -- x-position
-    y=90 -- y-position
+    -- not all of these variables are in use
+    x=50
+    y=90
     vx = 0
     vy = 0
     speed = 1
@@ -73,12 +74,12 @@ function _update()
 end
 
 function default_bubble_movement()
+    -- the great movement if statement
     if btn(0) then
         if vy > 0 and bubble_boost_time == bubble_boost_time_max then
             vx = jump_power_max
             vy = jump_power_max/2
             bubble_boost_time = 0
-            printh("h")
         elseif on_ground then
             vx = -speed  -- Left
         end
@@ -103,7 +104,7 @@ function default_bubble_movement()
         dir = 2
     end
 
-    if not on_ground then
+    if not on_ground then -- when falling, add drag to any horizontal movement
         if vx > 0 then
             vx = max(vx - 0.5, 0)           
         elseif vx < 0 then
@@ -111,19 +112,18 @@ function default_bubble_movement()
         end
     end
 
+    -- jump off the ground and in the water
     if btn(2) and (on_ground or bubble_boost_time == bubble_boost_time_max) then -- Jump
         vy = jump_power_max
         on_ground = false
         bubble_boost_time = 0
     end
 
-    --printh(vy)
-
+    -- this limits how often the player can boost in water
     bubble_boost_time = min(bubble_boost_time + 1, bubble_boost_time_max)
-    --printh(bubble_boost_time)
 
 
-    if vy > 0 then
+    if vy > 0 then  -- when falling, add drag to any vertical movement...and do other things, this should get cleaned up
         if vy <= 0.25 then
             vy = min(vy + 0.1, 0.25) -- give the graceful bubble drop affect 
         else
@@ -177,7 +177,7 @@ function person_falling_movement()
         if (dir < 0) dir = -3
         if (dir > 0) dir = 3
     else
-        --[[ -- disable movement when diving
+        --[[ -- uncomment to enable movement when diving
             if btn(0) then
                 dir = -5
             elseif btn(1) then
