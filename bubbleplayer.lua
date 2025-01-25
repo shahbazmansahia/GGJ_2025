@@ -18,6 +18,8 @@ function _init()
     jump_hold_time = 10
     jump_hold_time_max = jump_hold_time
     jump_active = false
+    bubble_boost_time = 20
+    bubble_boost_time_max = bubble_boost_time
     dir = 2
     health = 2
     state=0
@@ -56,56 +58,83 @@ function _update()
     end
     
     -- Check for vertical collisions (falling)
-    if not check_collision(x, y + vy) then
+    -- jumping underneath platforms is very janky
+    if not check_collision(x, y + vy) or (vy < 0 and not check_collision(x, y - 20)) then -- not sure how 20 works. I would think 9 would be enough
         y = y + vy  -- Update position if no collision
     else
         -- If collision, stop downward movement and set player on ground
         vy = 0
         on_ground = true
     end
-
+    
     -- DEBUG
     --printh("x : " .. x .. " y: " .. y .. " vx : " .. vx .. " vy: " .. vy )
     --printh("s: " .. state)
 end
 
 function default_bubble_movement()
-    if vy > 0 or on_ground then -- add coyote time when stopping then jumping.
-        if btn(0) then
-            vx = -1  -- Left
-            dir = -3
-        elseif btn(1) then
-            vx = speed   -- Right
-            dir = 3
-        else
-            vx = 0
-            dir = 2
+    if btn(0) then
+        if vy > 0 and bubble_boost_time == bubble_boost_time_max then
+            vx = jump_power_max
+            vy = jump_power_max/2
+            bubble_boost_time = 0
+            printh("h")
+        elseif on_ground then
+            vx = -speed  -- Left
+        end
+        
+        dir = -3
+    elseif btn(1) then
+        if vy > 0 and bubble_boost_time == bubble_boost_time_max then
+            vx = -jump_power_max
+            vy = jump_power_max/2
+            bubble_boost_time = 0
+        elseif on_ground then
+            vx = speed  -- Left    
+        end
+        dir = 3
+    elseif btn(3) then
+        if vy > 0 and bubble_boost_time == bubble_boost_time_max then
+            vy = -jump_power_max/2
+            bubble_boost_time = 0
+        end
+    else
+        vx = 0
+        dir = 2
+    end
+
+    if not on_ground then
+        if vx > 0 then
+            vx = max(vx - 0.5, 0)           
+        elseif vx < 0 then
+            vx = min(vx + 0.5, 0)
         end
     end
 
-    if on_ground and btn(2) then -- Jump
+    if btn(2) and (on_ground or bubble_boost_time == bubble_boost_time_max) then -- Jump
+        vy = jump_power_max
         on_ground = false
-        vy = jump_power
-    elseif on_ground and not btn(2) then
-        jump_hold_time = jump_hold_time_max
-        jump_power = jump_power_max
-        jump_boost = jump_boost_max
+        bubble_boost_time = 0
     end
 
-    
+    --printh(vy)
 
+    bubble_boost_time = min(bubble_boost_time + 1, bubble_boost_time_max)
+    --printh(bubble_boost_time)
 
 
     if vy > 0 then
-        vy = min(vy + 0.1, 1) -- give the graceful bubble drop affect 
+        if vy <= 0.25 then
+            vy = min(vy + 0.1, 0.25) -- give the graceful bubble drop affect 
+        else
+            vy = max(vy - 0.1, 0.25)
+        end
     else
         if btn(2) and not on_ground and jump_hold_time > 0 then
             jump_hold_time -= 1
             jump_hold_time = max(jump_hold_time, 0) -- Limit the jump power to a max value
-            
-                vy += 0.1
-                --vy += jump_boost
-                printh(jump_hold_time)
+        
+            vy += 0.1
         else
             vy += 0.5
         end
