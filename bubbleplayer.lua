@@ -70,7 +70,7 @@ function _update()
 end
 
 function default_bubble_movement()
-    if on_ground then -- add coyote time when stopping then jumping.
+    if vy > 0 or on_ground then -- add coyote time when stopping then jumping.
         if btn(0) then
             vx = -1  -- Left
             dir = -3
