@@ -45,7 +45,7 @@ function _init()
     on_ground = false
 
     -- bubbles!!!
-    add(float_objects, {x = 30, y = 496, x_origin = 30, y_origin = 496, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*3, y = 8*62, x_origin = 8*3, y_origin = 8*62, active = true, reset_timer = 0, max_height=30})
 
     -- Still trying to test this
     -- https://www.youtube.com/watch?v=IOe1aGY6hXA
