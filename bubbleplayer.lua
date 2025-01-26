@@ -1,6 +1,7 @@
 -- Flagged tile indices (replace with actual tile indices you're using for solid surfaces)
 local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
-
+num_float_objects = 1
+local float_objects = {}
 
 function _init()
     -- not all of these variables are in use
@@ -22,10 +23,15 @@ function _init()
     bubble_boost_time = 20
     bubble_boost_time_max = bubble_boost_time
     dir = 2
-    health = 2
-    state=0
+    state=-1
+    health = 0
+    setHealth(1)
 
     on_ground = false
+
+    for i = 1, num_float_objects do
+        add(float_objects, {x = rnd(128), y = 120, active = true})
+    end
 
     -- Still trying to test this
     -- https://www.youtube.com/watch?v=IOe1aGY6hXA
@@ -43,12 +49,11 @@ function _update()
     x=(x+128)%128 -- no bounds left and right
 
     if state == 0 then
-        default_bubble_movement()
-        if health == 1 then
-            state = 1
-        end
-    elseif state == 1 then
+        printh("b0")
         default_person_movement()
+    elseif state == 1 then
+        printh("b1")
+        default_bubble_movement()     
     elseif state == 2 then
         person_falling_movement()
     end
@@ -66,6 +71,28 @@ function _update()
         -- If collision, stop downward movement and set player on ground
         vy = 0
         on_ground = true
+    end
+
+    -- check for bubble collisions
+    for i = 1, #float_objects do
+        local obj = float_objects[i]
+        if obj.active then
+            if not collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
+                -- No collision detected, update object position
+                obj.y -= .25
+                
+                if obj.y < 0 then
+                    --table.remove(float_objects, i)
+                    obj.active = false
+                end
+            else
+                -- Collision detected, destroy object and add points
+                --table.remove(float_objects, i)
+                obj.active = false
+                setHealth(health+1)
+                
+            end
+        end
     end
     
     -- DEBUG
@@ -178,7 +205,7 @@ end
 
 function person_falling_movement()
     if on_ground then
-        state = 1
+        state = 0
         if (dir < 0) dir = -3
         if (dir > 0) dir = 3
     else
@@ -207,6 +234,13 @@ function _draw()
     map(0,0,0,0,16,16)
     -- draw the player, we use dir to mirror sprites
     draw_player(dir)
+
+    for i = 1, num_float_objects do
+        local obj = float_objects[i]
+        if obj.active then
+            spr(1, obj.x, obj.y)
+        end
+    end
 end
 
 -- still testing this
@@ -230,7 +264,7 @@ function is_solid_tile(x, y)
     return false  -- This is not a solid tile
 end
 
-
+-- check for map collisions
 function check_collision(new_x, new_y)
     -- Check collisions for all four corners of the character
     local x1 = flr(new_x / 8)  -- Calculate tile grid x for left side
@@ -244,6 +278,11 @@ function check_collision(new_x, new_y)
     end
     
     return false  -- No collision
+end
+
+-- check for collisions with another object
+function collides(ax, ay, aw, ah, bx, by, bw, bh)
+    return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 end
 
 function draw_player(dir)
@@ -260,6 +299,22 @@ function draw_player(dir)
     end
     
     
+end
+
+function setHealth(h)
+
+    if h == 2 then
+        state = 1
+    elseif h == 1 then
+        state = 0
+    elseif h == 0 then
+        state = -1
+    elseif h > 2 then
+        h = 2
+    end
+
+    health = h
+
 end
 
 function play_jump_sound()
