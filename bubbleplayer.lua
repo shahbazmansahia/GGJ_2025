@@ -2,6 +2,12 @@
 local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
 num_float_objects = 1
 local float_objects = {}
+local enemy_tiles = {16, 17, 18, 19}
+local fish_spawns = {{2, 9}, {11, 11}, {7, 5}}
+local herm_spawns = {{2, 15}, {12, 15}}
+local fishies = {}
+local hermes = {}
+
 
 function _init()
     -- not all of these variables are in use
@@ -42,6 +48,16 @@ function _init()
     jump_velocity = ((2 * jump_height) / jump_peak_time) * -1
     jump_gravity = ((-2 * jump_height) / (jump_peak_time * jump_peak_time)) * -1
     fall_gravity = ((-2 * jump_height) / (jump_fall_time * jump_fall_time)) * -1
+
+    for _, enemy in pairs(fish_spawns) do
+        temp_fish = create_fish(enemy[1] * 8, enemy[2] * 8)
+        fishies[#fishies+1] = temp_fish
+
+    end
+    for _, enemy in pairs(herm_spawns) do
+        temp_herm = create_herm(enemy[1] * 8, enemy[2] * 8)
+        hermes[#hermes+1] = temp_herm
+    end
     
 end
 
@@ -93,9 +109,27 @@ function _update()
         end
     end
     
+    update_enemies()
     -- DEBUG
     --printh("x : " .. x .. " y: " .. y .. " vx : " .. vx .. " vy: " .. vy )
     --printh("s: " .. state)
+end
+
+function update_enemies() -- animates the enemies
+    for i, fish in pairs(fishies) do
+        if (fish.x > (fish.origin_x + fish.x_range)) then
+            fish.dir = -1
+        elseif (fish.x < (fish.origin_x - fish.x_range)) then
+            fish.dir = 1
+        end
+        fish.x = fish.x + fish.dir
+        fishies[i] = fish
+    end
+
+    for i, herm in pairs(hermes) do
+        herm.x = herm.x + herm.dir
+        hermes[i] = herm
+    end
 end
 
 function default_bubble_movement()
@@ -105,6 +139,7 @@ function default_bubble_movement()
             vx = jump_power_max
             vy = jump_power_max/2
             bubble_boost_time = 0
+            play_jump_sound('left')
         elseif on_ground then
             vx = -speed  -- Left
         end
@@ -115,16 +150,17 @@ function default_bubble_movement()
             vx = -jump_power_max
             vy = jump_power_max/2
             bubble_boost_time = 0
+            play_jump_sound('right')
         elseif on_ground then
             vx = speed  -- Left    
         end
         dir = 3
     elseif btn(3) then
+
         if vy > 0 and bubble_boost_time == bubble_boost_time_max then
             vy = -jump_power_max/2
             bubble_boost_time = 0
-            -- printh("bubble jump triggered!")
-            -- play_jump_sound()
+            play_jump_sound('down')
         end
     else
         vx = 0
@@ -144,6 +180,7 @@ function default_bubble_movement()
         vy = jump_power_max
         on_ground = false
         bubble_boost_time = 0
+        play_jump_sound('up')
     end
 
     -- this limits how often the player can boost in water
@@ -184,8 +221,6 @@ function default_person_movement()
     end
 
     if btnp(2) and on_ground then -- Jump
-        -- printh("jump triggered!")
-        -- play_jump_sound()
         vy = person_jump_power
         on_ground = false
         
@@ -239,6 +274,26 @@ function _draw()
             spr(1, obj.x, obj.y)
         end
     end
+    
+    draw_enemies()
+end
+
+function draw_enemies()
+    for _, fish in pairs(fishies) do
+        is_flip = (fish.dir < 0)
+        if (fish.x % 2 == 0) then
+            spr(fish.sprite, fish.x, fish.y, 1, 1, is_flip)
+        else
+            spr(fish.animation, fish.x, fish.y, 1, 1, is_flip)
+        end
+    end
+    for _, herm in pairs(hermes) do
+        if (herm.x % 3 == 0) then
+            spr(herm.sprite, herm.x, herm.y)
+        else
+            spr(herm.animation, herm.x, herm.y)
+        end
+    end
 end
 
 -- still testing this
@@ -262,6 +317,18 @@ function is_solid_tile(x, y)
     return false  -- This is not a solid tile
 end
 
+
+function is_enemy_tile(x, y)
+    local tile = mget(x, y)
+    for i=1, #enemy_tiles do
+        if tile == enemy_tiles[i] then
+            printh("ENEMY COLLISION! ", tile)
+            return true
+        end
+    end
+    return false
+end
+
 -- check for map collisions
 function check_collision(new_x, new_y)
     -- Check collisions for all four corners of the character
@@ -274,6 +341,14 @@ function check_collision(new_x, new_y)
     if is_solid_tile(x1, y1) or is_solid_tile(x1, y2) or is_solid_tile(x2, y1) or is_solid_tile(x2, y2) then
         return true  -- There's a collision
     end
+
+    if is_enemy_tile(x1, y1) or is_enemy_tile(x1, y2) or is_enemy_tile(x2, y1) or is_enemy_tile(x2, y2) then
+        play_hurt_sound()
+        health = health-1
+        player_pos_x = player_pos_x - 4 -- poor attempt at a knockback for now ;-;
+        return true  -- There's a collision
+    end
+    
     
     return false  -- No collision
 end
@@ -320,7 +395,53 @@ function play_jump_sound()
     play_sfx(0)
 end
 
+function create_fish(spawn_x, spawn_y)
+    local fish = {
+        x = spawn_x,
+        y = spawn_y,
+        origin_x = spawn_x,
+        x_range = 16,
+        dir = 1,
+        sprite = 17,
+        animation = 16
+        
+    }
+    return fish
+end
+
+function create_herm(spawn_x, spawn_y)
+    local herm = {
+        x = spawn_x,
+        y = spawn_y,
+        origin_x = spawn_x,
+        dir = -1,
+        sprite = 19,
+        animation = 18
+    }
+    return herm
+end
+
+
+
+
+function play_jump_sound(str_dir)
+
+    --printh ('Jump Sound Triggered!')
+    if (str_dir == 'up') then
+        sfx(0)
+    elseif (str_dir == 'left') or (str_dir == 'right') then
+        sfx(2)
+    elseif (str_dir == 'down') then
+        sfx(3)
+    else
+        printh ("ERROR: no direction mentioned to play sound!")
+    end
+    sfx(0)
+
+end
+
+
 function play_hurt_sound()
+    sfx(1)
     printh ('Hurt Sound Triggered!')
-    return
 end
