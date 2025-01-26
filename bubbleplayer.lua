@@ -264,7 +264,7 @@ end
 
 function play_jump_sound()
     printh ('Jump Sound Triggered!')
-    play_sfx(0)
+    sfx(0, 4)
 end
 
 function play_hurt_sound()
