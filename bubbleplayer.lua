@@ -98,6 +98,8 @@ function default_bubble_movement()
         if vy > 0 and bubble_boost_time == bubble_boost_time_max then
             vy = -jump_power_max/2
             bubble_boost_time = 0
+            -- printh("bubble jump triggered!")
+            -- play_jump_sound()
         end
     else
         vx = 0
@@ -157,8 +159,11 @@ function default_person_movement()
     end
 
     if btnp(2) and on_ground then -- Jump
+        -- printh("jump triggered!")
+        -- play_jump_sound()
         vy = person_jump_power
         on_ground = false
+        
     end
 
     if vy > 0 and not on_ground then
@@ -255,4 +260,14 @@ function draw_player(dir)
     end
     
     
+end
+
+function play_jump_sound()
+    printh ('Jump Sound Triggered!')
+    play_sfx(0)
+end
+
+function play_hurt_sound()
+    printh ('Hurt Sound Triggered!')
+    return
 end
