@@ -1,6 +1,10 @@
 -- Flagged tile indices (replace with actual tile indices you're using for solid surfaces)
 local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
 local enemy_tiles = {16, 17, 18, 19}
+local fish_spawns = {{2, 9}, {11, 11}, {7, 5}}
+local herm_spawns = {{2, 15}, {12, 15}}
+local fishies = {}
+local hermes = {}
 
 enemies = {
     x = 0,
@@ -9,19 +13,19 @@ enemies = {
     animation = nil
 }
 
-fishies = {
-    x = 0,
-    y = 0,
-    sprite = 17,
-    animation = 18
-}
+-- fishies = {
+--     x = 0,
+--     y = 0,
+--     sprite = 17,
+--     animation = 18
+-- }
 
-hermes = {
-    x = 0,
-    y = 0,
-    sprite = 19,
-    animation = 18
-}
+-- hermes = {
+--     x = 0,
+--     y = 0,
+--     sprite = 19,
+--     animation = 18
+-- }
 
 function _init()
     -- not all of these variables are in use
@@ -57,6 +61,20 @@ function _init()
     jump_velocity = ((2 * jump_height) / jump_peak_time) * -1
     jump_gravity = ((-2 * jump_height) / (jump_peak_time * jump_peak_time)) * -1
     fall_gravity = ((-2 * jump_height) / (jump_fall_time * jump_fall_time)) * -1
+
+    for _, enemy in pairs(fish_spawns) do
+        temp_fish = create_fish(enemy[1] * 8, enemy[2] * 8)
+        printh (temp_fish.x)
+        --table.insert(fishies, temp_fish)
+        fishies[#fishies+1] = temp_fish
+
+    end
+    for _, enemy in pairs(herm_spawns) do
+        temp_herm = create_herm(enemy[1] * 8, enemy[2] * 8)
+        printh (temp_herm.x)
+        --table.insert(hermes, temp_herm)
+        hermes[#hermes+1] = temp_herm
+    end
     
 end
 
@@ -89,9 +107,14 @@ function _update()
         on_ground = true
     end
     
+    update_enemies()
     -- DEBUG
     --printh("x : " .. x .. " y: " .. y .. " vx : " .. vx .. " vy: " .. vy )
     --printh("s: " .. state)
+end
+
+function update_enemies() -- animates the enemies
+    return
 end
 
 function default_bubble_movement()
@@ -229,6 +252,24 @@ function _draw()
     map(0,0,0,0,16,16)
     -- draw the player, we use dir to mirror sprites
     draw_player(dir)
+    draw_enemies()
+end
+
+function draw_enemies()
+    for _, fish in pairs(fishies) do
+        if (fish.x % 2 == 0) then
+            spr(fish.sprite, fish.x, fish.y)
+        else
+            spr(fish.animation, fish.x, fish.y)
+        end
+    end
+    for _, herm in pairs(hermes) do
+        if (herm.x % 2 == 0) then
+            spr(herm.sprite, herm.x, herm.y)
+        else
+            spr(herm.animation, herm.x, herm.y)
+        end
+    end
 end
 
 -- still testing this
