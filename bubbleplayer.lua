@@ -7,8 +7,10 @@ function _init()
     num_float_objects = 1
     float_objects = {}
     enemy_tiles = {16, 17, 18, 19}
-    fish_spawns = {{2, 9}, {11, 11}, {7, 5}}
-    herm_spawns = {{2, 15}, {12, 15}}
+    --fish_spawns = {{2, 9}, {11, 11}, {7, 5}}
+    fish_spawns = {{18, 41}, {27, 39}, {9, 38}, {5, 38}, {7, 25}, {10, 20}}
+    --herm_spawns = {{2, 15}, {12, 15}}
+    herm_spawns = {{27, 46}, {8, 40}, {2, 37}, {9, 22}, {6, 17}, {7, 12}}
     fishies = {}
     hermes = {}
 
@@ -158,6 +160,7 @@ function _update()
             if obj.active then
                 if collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
                     --obj.active = false
+                    play_hurt_sound()
                     setHealth(health-1)               
                 end
             end
@@ -168,6 +171,7 @@ function _update()
             if obj.active then
                 if collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
                     --obj.active = false
+                    play_hurt_sound()
                     setHealth(health-1)               
                 end
             end
