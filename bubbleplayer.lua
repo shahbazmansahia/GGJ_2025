@@ -2,7 +2,8 @@
 
 
 function _init()
-    solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
+    solid_tiles = { 33, 34, 35}  -- Example indices for solid tiles
+    platforms = {20, 21, 22, 23}
     num_float_objects = 1
     float_objects = {}
     enemy_tiles = {16, 17, 18, 19}
