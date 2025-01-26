@@ -80,6 +80,7 @@ function default_bubble_movement()
             vx = jump_power_max
             vy = jump_power_max/2
             bubble_boost_time = 0
+            play_jump_sound('left')
         elseif on_ground then
             vx = -speed  -- Left
         end
@@ -90,6 +91,7 @@ function default_bubble_movement()
             vx = -jump_power_max
             vy = jump_power_max/2
             bubble_boost_time = 0
+            play_jump_sound('right')
         elseif on_ground then
             vx = speed  -- Left    
         end
@@ -98,7 +100,8 @@ function default_bubble_movement()
 
         if vy > 0 and bubble_boost_time == bubble_boost_time_max then
             vy = -jump_power_max/2
-            bubble_boost_time = 0            
+            bubble_boost_time = 0
+            play_jump_sound('down')
         end
     else
         vx = 0
@@ -118,7 +121,7 @@ function default_bubble_movement()
         vy = jump_power_max
         on_ground = false
         bubble_boost_time = 0
-        play_jump_sound()
+        play_jump_sound('up')
     end
 
     -- this limits how often the player can boost in water
@@ -260,11 +263,22 @@ function draw_player(dir)
     
 end
 
-function play_jump_sound()
+function play_jump_sound(str_dir)
+
     printh ('Jump Sound Triggered!')
+    if (str_dir == 'up') then
+        sfx(0)
+    elseif (str_dir == 'left') or (str_dir == 'right') then
+        sfx(2)
+    elseif (str_dir == 'down') then
+        sfx(3)
+    else
+        printh ("ERROR: no direction mentioned to play sound!")
+    end
     sfx(0)
     --sfx(-1)
 end
+
 
 function play_hurt_sound()
     sfx(1)
