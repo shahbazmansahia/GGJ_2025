@@ -49,10 +49,8 @@ function _update()
     x=(x+128)%128 -- no bounds left and right
 
     if state == 0 then
-        printh("b0")
         default_person_movement()
     elseif state == 1 then
-        printh("b1")
         default_bubble_movement()     
     elseif state == 2 then
         person_falling_movement()
