@@ -95,11 +95,10 @@ function default_bubble_movement()
         end
         dir = 3
     elseif btn(3) then
+
         if vy > 0 and bubble_boost_time == bubble_boost_time_max then
             vy = -jump_power_max/2
-            bubble_boost_time = 0
-            -- printh("bubble jump triggered!")
-            -- play_jump_sound()
+            bubble_boost_time = 0            
         end
     else
         vx = 0
@@ -119,6 +118,7 @@ function default_bubble_movement()
         vy = jump_power_max
         on_ground = false
         bubble_boost_time = 0
+        play_jump_sound()
     end
 
     -- this limits how often the player can boost in water
@@ -159,8 +159,6 @@ function default_person_movement()
     end
 
     if btnp(2) and on_ground then -- Jump
-        -- printh("jump triggered!")
-        -- play_jump_sound()
         vy = person_jump_power
         on_ground = false
         
@@ -264,10 +262,13 @@ end
 
 function play_jump_sound()
     printh ('Jump Sound Triggered!')
-    sfx(0, 4)
+    sfx(0)
+    --sfx(-1)
 end
 
 function play_hurt_sound()
+    sfx(1)
+    --sfx(-1)
     printh ('Hurt Sound Triggered!')
     return
 end
