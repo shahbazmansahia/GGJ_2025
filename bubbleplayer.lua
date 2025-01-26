@@ -1,6 +1,27 @@
 -- Flagged tile indices (replace with actual tile indices you're using for solid surfaces)
 local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
+local enemy_tiles = {16, 17, 18, 19}
 
+enemies = {
+    x = 0,
+    y = 0,
+    sprite = nil,
+    animation = nil
+}
+
+fishies = {
+    x = 0,
+    y = 0,
+    sprite = 17,
+    animation = 18
+}
+
+hermes = {
+    x = 0,
+    y = 0,
+    sprite = 19,
+    animation = 18
+}
 
 function _init()
     -- not all of these variables are in use
@@ -263,6 +284,30 @@ function draw_player(dir)
     
 end
 
+function create_fish(spawn_x, spawn_y)
+    local fish = {
+        x = spawn_x,
+        y = spawn_y,
+        sprite = 17,
+        animation = 16
+        
+    }
+    return fish
+end
+
+function create_herm(spawn_x, spawn_y)
+    local herm = {
+        x = spawn_x,
+        y = spawn_y,
+        sprite = 19,
+        animation = 18
+    }
+    return herm
+end
+
+
+
+
 function play_jump_sound(str_dir)
 
     printh ('Jump Sound Triggered!')
@@ -276,13 +321,11 @@ function play_jump_sound(str_dir)
         printh ("ERROR: no direction mentioned to play sound!")
     end
     sfx(0)
-    --sfx(-1)
+
 end
 
 
 function play_hurt_sound()
     sfx(1)
-    --sfx(-1)
     printh ('Hurt Sound Triggered!')
-    return
 end
