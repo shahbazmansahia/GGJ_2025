@@ -1,18 +1,19 @@
 -- Flagged tile indices (replace with actual tile indices you're using for solid surfaces)
-local solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
-num_float_objects = 1
-local float_objects = {}
-local enemy_tiles = {16, 17, 18, 19}
-local fish_spawns = {{2, 9}, {11, 11}, {7, 5}}
-local herm_spawns = {{2, 15}, {12, 15}}
-local fishies = {}
-local hermes = {}
 
 
 function _init()
+    solid_tiles = { 33, 34, 35 }  -- Example indices for solid tiles
+    num_float_objects = 1
+    float_objects = {}
+    enemy_tiles = {16, 17, 18, 19}
+    fish_spawns = {{2, 9}, {11, 11}, {7, 5}}
+    herm_spawns = {{2, 15}, {12, 15}}
+    fishies = {}
+    hermes = {}
+
     -- not all of these variables are in use
-    x=50
-    y=90
+    x=56
+    y=488
     vx = 0
     vy = 0
     speed = 1
@@ -30,8 +31,15 @@ function _init()
     bubble_boost_time_max = bubble_boost_time
     dir = 2
     state=-1
+    immune_time = 20
+    immune_time_max = immune_time
     health = 0
-    setHealth(1)
+    setHealth(2)
+    gameover = false
+    restart_timer = 50
+    restart_timer_max = restart_timer
+    camera_x = 0
+    camera_y = 3
 
     on_ground = false
 
@@ -62,54 +70,95 @@ function _init()
 end
 
 function _update()
-    x=(x+128)%128 -- no bounds left and right
-
-    if state == 0 then
-        default_person_movement()
-    elseif state == 1 then
-        default_bubble_movement()     
-    elseif state == 2 then
-        person_falling_movement()
-    end
-
-    -- Check for collisions in the new position before updating
-    if not check_collision(x + vx, y) then
-        x = x + vx  -- Update position if no collision
-    end
     
-    -- Check for vertical collisions (falling)
-    -- jumping underneath platforms is very janky
-    if not check_collision(x, y + vy) or (vy < 0 and not check_collision(x, y - 20)) then -- not sure how 20 works. I would think 9 would be enough
-        y = y + vy  -- Update position if no collision
+    if gameover then
+        restart_timer += 1
+        if restart_timer >= restart_timer_max then
+            _init()
+        end
     else
-        -- If collision, stop downward movement and set player on ground
-        vy = 0
-        on_ground = true
-    end
+        immune_time = min(immune_time + 1, immune_time_max)
 
-    -- check for bubble collisions
-    for i = 1, #float_objects do
-        local obj = float_objects[i]
-        if obj.active then
-            if not collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
-                -- No collision detected, update object position
-                obj.y -= .25
-                
-                if obj.y < 0 then
+        local player_chunk_x = flr((x) / 128)
+        local player_chunk_y = flr((y) / 128)
+        printh(camera_x)
+
+
+
+        camera(player_chunk_x*16*8, player_chunk_y*16*8)
+
+        if state == 0 then
+            default_person_movement()
+        elseif state == 1 then
+            default_bubble_movement()     
+        elseif state == 2 then
+            person_falling_movement()
+        elseif state == -1 then
+            vy += 0.1
+            vx = 0
+            gameover = true
+            restart_timer = 0
+        end
+
+        -- Check for collisions in the new position before updating
+        if not check_collision(x + vx, y) then
+            x = x + vx  -- Update position if no collision
+        end
+        
+        -- Check for vertical collisions (falling)
+        -- jumping underneath platforms is very janky
+        if not check_collision(x, y + vy) or (vy < 0 and not check_collision(x, y - 20)) then -- not sure how 20 works. I would think 9 would be enough
+            y = y + vy  -- Update position if no collision
+        else
+            -- If collision, stop downward movement and set player on ground
+            vy = 0
+            on_ground = true
+        end
+
+        -- check for bubble collisions
+        for i = 1, #float_objects do
+            local obj = float_objects[i]
+            if obj.active then
+                if not collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
+                    -- No collision detected, update object position
+                    obj.y -= .25
+                    
+                    if obj.y < 0 then
+                        --table.remove(float_objects, i)
+                        obj.active = false
+                    end
+                else
+                    -- Collision detected, destroy object and add points
                     --table.remove(float_objects, i)
                     obj.active = false
+                    setHealth(health+1)
+                    
                 end
-            else
-                -- Collision detected, destroy object and add points
-                --table.remove(float_objects, i)
-                obj.active = false
-                setHealth(health+1)
-                
             end
         end
+
+        for i = 1, #fishies do
+            local obj = fishies[i]
+            if obj.active then
+                if collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
+                    --obj.active = false
+                    setHealth(health-1)               
+                end
+            end
+        end
+
+        for i = 1, #hermes do
+            local obj = hermes[i]
+            if obj.active then
+                if collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
+                    --obj.active = false
+                    setHealth(health-1)               
+                end
+            end
+        end
+        
+        update_enemies()
     end
-    
-    update_enemies()
     -- DEBUG
     --printh("x : " .. x .. " y: " .. y .. " vx : " .. vx .. " vy: " .. vy )
     --printh("s: " .. state)
@@ -127,7 +176,12 @@ function update_enemies() -- animates the enemies
     end
 
     for i, herm in pairs(hermes) do
+        if check_collision(herm.x + herm.dir, herm.y) then
+            herm.dir = -herm.dir
+        end
+
         herm.x = herm.x + herm.dir
+        
         hermes[i] = herm
     end
 end
@@ -262,20 +316,24 @@ function person_falling_movement()
 end
 
 function _draw()
-    cls()
-    -- draw the world
-    map(0,0,0,0,16,16)
-    -- draw the player, we use dir to mirror sprites
-    draw_player(dir)
+    if gameover then
+        print("Game Over")
+    else
+        cls()
+        -- draw the world
+        map()
+        -- draw the player, we use dir to mirror sprites
+        draw_player(dir)
 
-    for i = 1, num_float_objects do
-        local obj = float_objects[i]
-        if obj.active then
-            spr(1, obj.x, obj.y)
+        for i = 1, num_float_objects do
+            local obj = float_objects[i]
+            if obj.active then
+                spr(1, obj.x, obj.y)
+            end
         end
+        
+        draw_enemies()
     end
-    
-    draw_enemies()
 end
 
 function draw_enemies()
@@ -342,12 +400,14 @@ function check_collision(new_x, new_y)
         return true  -- There's a collision
     end
 
-    if is_enemy_tile(x1, y1) or is_enemy_tile(x1, y2) or is_enemy_tile(x2, y1) or is_enemy_tile(x2, y2) then
-        play_hurt_sound()
-        health = health-1
-        player_pos_x = player_pos_x - 4 -- poor attempt at a knockback for now ;-;
-        return true  -- There's a collision
-    end
+    --[[
+        if is_enemy_tile(x1, y1) or is_enemy_tile(x1, y2) or is_enemy_tile(x2, y1) or is_enemy_tile(x2, y2) then
+            play_hurt_sound()
+            health = health-1
+            player_pos_x = player_pos_x - 4 -- poor attempt at a knockback for now ;-;
+            return true  -- There's a collision
+        end
+        ]]
     
     
     return false  -- No collision
@@ -376,17 +436,20 @@ end
 
 function setHealth(h)
 
-    if h == 2 then
-        state = 1
-    elseif h == 1 then
-        state = 0
-    elseif h == 0 then
-        state = -1
-    elseif h > 2 then
-        h = 2
-    end
+    if immune_time >= immune_time_max then
+        if h == 2 then
+            state = 1
+        elseif h == 1 then
+            state = 0
+        elseif h == 0 then
+            state = -1
+        elseif h > 2 then
+            h = 2
+        end
 
-    health = h
+        health = h
+        immune_time = 0
+    end
 
 end
 
@@ -403,7 +466,8 @@ function create_fish(spawn_x, spawn_y)
         x_range = 16,
         dir = 1,
         sprite = 17,
-        animation = 16
+        animation = 16,
+        active = true
         
     }
     return fish
@@ -416,7 +480,8 @@ function create_herm(spawn_x, spawn_y)
         origin_x = spawn_x,
         dir = -1,
         sprite = 19,
-        animation = 18
+        animation = 18,
+        active = true
     }
     return herm
 end
