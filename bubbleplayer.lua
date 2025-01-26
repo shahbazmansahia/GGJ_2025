@@ -6,27 +6,6 @@ local herm_spawns = {{2, 15}, {12, 15}}
 local fishies = {}
 local hermes = {}
 
-enemies = {
-    x = 0,
-    y = 0,
-    sprite = nil,
-    animation = nil
-}
-
--- fishies = {
---     x = 0,
---     y = 0,
---     sprite = 17,
---     animation = 18
--- }
-
--- hermes = {
---     x = 0,
---     y = 0,
---     sprite = 19,
---     animation = 18
--- }
-
 function _init()
     -- not all of these variables are in use
     x=50
@@ -64,15 +43,11 @@ function _init()
 
     for _, enemy in pairs(fish_spawns) do
         temp_fish = create_fish(enemy[1] * 8, enemy[2] * 8)
-        printh (temp_fish.x)
-        --table.insert(fishies, temp_fish)
         fishies[#fishies+1] = temp_fish
 
     end
     for _, enemy in pairs(herm_spawns) do
         temp_herm = create_herm(enemy[1] * 8, enemy[2] * 8)
-        printh (temp_herm.x)
-        --table.insert(hermes, temp_herm)
         hermes[#hermes+1] = temp_herm
     end
     
@@ -114,7 +89,20 @@ function _update()
 end
 
 function update_enemies() -- animates the enemies
-    return
+    for i, fish in pairs(fishies) do
+        if (fish.x > (fish.origin_x + fish.x_range)) then
+            fish.dir = -1
+        elseif (fish.x < (fish.origin_x - fish.x_range)) then
+            fish.dir = 1
+        end
+        fish.x = fish.x + fish.dir
+        fishies[i] = fish
+    end
+
+    for i, herm in pairs(hermes) do
+        herm.x = herm.x + herm.dir
+        hermes[i] = herm
+    end
 end
 
 function default_bubble_movement()
@@ -257,14 +245,15 @@ end
 
 function draw_enemies()
     for _, fish in pairs(fishies) do
+        is_flip = (fish.dir < 0)
         if (fish.x % 2 == 0) then
-            spr(fish.sprite, fish.x, fish.y)
+            spr(fish.sprite, fish.x, fish.y, 1, 1, is_flip)
         else
-            spr(fish.animation, fish.x, fish.y)
+            spr(fish.animation, fish.x, fish.y, 1, 1, is_flip)
         end
     end
     for _, herm in pairs(hermes) do
-        if (herm.x % 2 == 0) then
+        if (herm.x % 3 == 0) then
             spr(herm.sprite, herm.x, herm.y)
         else
             spr(herm.animation, herm.x, herm.y)
@@ -293,6 +282,16 @@ function is_solid_tile(x, y)
     return false  -- This is not a solid tile
 end
 
+function is_enemy_tile(x, y)
+    local tile = mget(x, y)
+    for i=1, #enemy_tiles do
+        if tile == enemy_tiles[i] then
+            printh("ENEMY COLLISION! ", tile)
+            return true
+        end
+    end
+    return false
+end
 
 function check_collision(new_x, new_y)
     -- Check collisions for all four corners of the character
@@ -305,6 +304,14 @@ function check_collision(new_x, new_y)
     if is_solid_tile(x1, y1) or is_solid_tile(x1, y2) or is_solid_tile(x2, y1) or is_solid_tile(x2, y2) then
         return true  -- There's a collision
     end
+
+    if is_enemy_tile(x1, y1) or is_enemy_tile(x1, y2) or is_enemy_tile(x2, y1) or is_enemy_tile(x2, y2) then
+        play_hurt_sound()
+        health = health-1
+        player_pos_x = player_pos_x - 4 -- poor attempt at a knockback for now ;-;
+        return true  -- There's a collision
+    end
+    
     
     return false  -- No collision
 end
@@ -329,6 +336,9 @@ function create_fish(spawn_x, spawn_y)
     local fish = {
         x = spawn_x,
         y = spawn_y,
+        origin_x = spawn_x,
+        x_range = 16,
+        dir = 1,
         sprite = 17,
         animation = 16
         
@@ -340,6 +350,8 @@ function create_herm(spawn_x, spawn_y)
     local herm = {
         x = spawn_x,
         y = spawn_y,
+        origin_x = spawn_x,
+        dir = -1,
         sprite = 19,
         animation = 18
     }
@@ -351,7 +363,7 @@ end
 
 function play_jump_sound(str_dir)
 
-    printh ('Jump Sound Triggered!')
+    --printh ('Jump Sound Triggered!')
     if (str_dir == 'up') then
         sfx(0)
     elseif (str_dir == 'left') or (str_dir == 'right') then
