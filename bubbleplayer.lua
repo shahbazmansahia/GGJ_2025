@@ -44,9 +44,8 @@ function _init()
 
     on_ground = false
 
-    for i = 1, num_float_objects do
-        add(float_objects, {x = rnd(128), y = 120, active = true})
-    end
+    -- bubbles!!!
+    add(float_objects, {x = 30, y = 496, x_origin = 30, y_origin = 496, active = true, reset_timer = 0, max_height=30})
 
     -- Still trying to test this
     -- https://www.youtube.com/watch?v=IOe1aGY6hXA
@@ -82,7 +81,6 @@ function _update()
 
         local player_chunk_x = flr((x) / 128)
         local player_chunk_y = flr((y) / 128)
-        printh(camera_x)
 
 
 
@@ -120,20 +118,32 @@ function _update()
         for i = 1, #float_objects do
             local obj = float_objects[i]
             if obj.active then
-                if not collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
-                    -- No collision detected, update object position
+                -- (not check_collision(obj.y - .25, y)) or 
+                if obj.y > obj.y_origin - obj.max_height then
                     obj.y -= .25
-                    
-                    if obj.y < 0 then
-                        --table.remove(float_objects, i)
-                        obj.active = false
-                    end
                 else
+                    obj.active = false
+                    obj.reset_timer = 20
+                end
+
+                if obj.active and collides(x, y, 8, 8, obj.x, obj.y, 8, 8) then
                     -- Collision detected, destroy object and add points
                     --table.remove(float_objects, i)
                     obj.active = false
+                    obj.reset_timer = 20
                     setHealth(health+1)
                     
+                end
+
+                        -- Check for collisions in the new position before updating
+
+            else
+                obj.reset_timer -= 1
+
+                if obj.reset_timer <= 0 then
+                    obj.active = true
+                    obj.x = obj.x_origin
+                    obj.y = obj.y_origin
                 end
             end
         end
@@ -331,8 +341,10 @@ function _draw()
             if obj.active then
                 spr(1, obj.x, obj.y)
             end
+
+            spr(36, obj.x_origin, obj.y_origin)
         end
-        
+
         draw_enemies()
     end
 end
