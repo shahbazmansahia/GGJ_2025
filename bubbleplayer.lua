@@ -45,7 +45,12 @@ function _init()
     on_ground = false
 
     -- bubbles!!!
-    add(float_objects, {x = 8*3, y = 8*62, x_origin = 8*3, y_origin = 8*62, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*5, y = 8*61, x_origin = 8*5, y_origin = 8*61, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*12, y = 8*60, x_origin = 8*12, y_origin = 8*60, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*18, y = 8*43, x_origin = 8*18, y_origin = 8*43, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*3, y = 8*39, x_origin = 8*3, y_origin = 8*39, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*13, y = 8*28, x_origin = 8*13, y_origin = 8*28, active = true, reset_timer = 0, max_height=30})
+    add(float_objects, {x = 8*5, y = 8*22, x_origin = 8*5, y_origin = 8*22, active = true, reset_timer = 0, max_height=30})
 
     -- Still trying to test this
     -- https://www.youtube.com/watch?v=IOe1aGY6hXA
@@ -336,7 +341,7 @@ function _draw()
         -- draw the player, we use dir to mirror sprites
         draw_player(dir)
 
-        for i = 1, num_float_objects do
+        for i = 1, #float_objects do
             local obj = float_objects[i]
             if obj.active then
                 spr(1, obj.x, obj.y)
