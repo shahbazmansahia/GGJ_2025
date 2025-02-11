@@ -408,6 +408,16 @@ function is_solid_tile(x, y)
     return false  -- This is not a solid tile
 end
 
+-- FIXME: Platform tile behavior will mimic solid tile behavior like this; we need to specify to check collision only when falling!
+function is_platform_tile(x, y)
+    local tile = mget(x, y)
+    for i=1, #platforms do
+        if tile == platforms[i] then
+            return true  -- This is a solid tile
+        end
+    end
+    return false  -- This is not a solid tile
+end
 
 function is_enemy_tile(x, y)
     local tile = mget(x, y)
@@ -433,6 +443,10 @@ function check_collision(new_x, new_y)
         return true  -- There's a collision
     end
 
+    -- Check if platform is collided with; player should move through the platform if jumping from beneath
+    if (is_platform_tile(x1, y1) or is_platform_tile(x1, y2) or is_platform_tile(x2, y1) or is_platform_tile(x2, y2)) and not on_ground then
+        return true
+    end
     --[[
         if is_enemy_tile(x1, y1) or is_enemy_tile(x1, y2) or is_enemy_tile(x2, y1) or is_enemy_tile(x2, y2) then
             play_hurt_sound()
